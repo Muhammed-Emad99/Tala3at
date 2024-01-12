@@ -24,13 +24,13 @@ class RegisterRequest extends FormRequest
     {
         return [
             'name' => 'required|string|min:3,max:64',
-            'email' => 'required|email|unique:users',
-            'mobile' => 'required|max:11,min:11',
+            'email' => 'required|email|unique:users,email',
+            'mobile' => 'required|unique:users,mobile|max:11,min:11',
             'state_id' => 'required',
             'city_id' => 'required',
             'date_of_birth' => 'required',
             'gender' => 'required|string|in:male,female',
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'photo' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
             'password' => 'required|min:8,max:128',
         ];
     }

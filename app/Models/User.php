@@ -17,7 +17,11 @@ class User extends Authenticatable
      *
      * @var array<int, string>
      */
-    protected $guarded = [];
+    protected $fillable = [
+        'name','email','password',
+        'image','gender','mobile',
+        'state_id','city_id','date_of_birth'
+    ];
 
     /**
      * The attributes that should be hidden for serialization.
@@ -38,11 +42,6 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
-
-    public function getImageAttribute($value)
-    {
-        return asset('uploads/images/users/'.$value);
-    }
 
     public function journeies(){
         return $this->hasMany(Journey::class);

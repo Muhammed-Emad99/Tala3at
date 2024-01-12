@@ -4,15 +4,22 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LoginRequest;
+use App\Http\Requests\PasswordRequest;
 use App\Http\Requests\RegisterRequest;
+use App\Http\Requests\ResetPasswordRequest;
 use App\Http\Resources\LoginResource;
 use App\Http\Resources\AuthResource;
+use App\Mail\EmailVerify;
 use App\Models\City;
 use App\Models\State;
 use App\Models\User;
 use Exception;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Str;
 
 class AuthController extends Controller
 {
@@ -44,27 +51,20 @@ class AuthController extends Controller
 
         try {
 
-            if ($request->hasFile('image')) {
+            if ($request->hasFile('photo')) {
 
-                $imageName  = \Str::random(5) . '.' .  $request->image->extension();
-                $request->image->move(public_path('uploads/images/users') , $imageName);
+                $imageName = Str::random(5) . '.' . $request->photo->extension();
+                $request->photo->move(public_path('uploads/images/users'), $imageName);
 
-                $user = User::create([
-                    "name" => $request->name,
-                    "email" => $request->email,
-                    "mobile" => $request->mobile,
-                    "state_id" => $request->state_id,
-                    'city_id' => $request->state_id,
-                    'date_of_birth' => $request->date_of_birth,
-                    'gender' => $request->gender,
-                    'image' => $imageName,
-                    'password' => Hash::make($request->password),
-                ]);
+                $request->merge(['image' => $imageName]);
+                $data = $request->except(['photo']);
+
+                $user = User::create($data);
 
                 return response()->json(
                     [
                         "status" => true,
-                        "msg" => 'User created successfully',
+                        "msg" => 'User created successfully, you must verify your email',
                         'user' => new AuthResource($user), "token" => $user->createToken("API TOKEN")->plainTextToken,
                     ], 200);
 
@@ -110,4 +110,80 @@ class AuthController extends Controller
             );
         }
     }
+
+
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+        $user_id = $user->id;
+        $code = rand(100000, 999999);
+
+
+        DB::table('verifications')->updateOrInsert(["user_id" => $user_id], ["code" => $code]);
+        Mail::to($user->email)->send(new EmailVerify($code));
+
+        return response()->json(
+            [
+                "status" => true,
+                "msg" => 'Code Send successfully, check your email',
+            ], 200);
+
+
+    }
+
+    public function confirmEmail(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'code' => 'required',
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+        $user_id = $user->id;
+        $code = DB::table('verifications')->where(["user_id" => $user_id])->value('code');
+
+        if ($request->code != $code) {
+            return response()->json(
+                [
+                    "status" => true,
+                    "msg" => 'Invalid verification code, please send code again',
+                ], 200);
+        }
+
+        return response()->json(
+            [
+                "status" => true,
+                "msg" => 'Go to change your password',
+            ], 200);
+
+    }
+
+    public function changePassword(ResetPasswordRequest $request)
+    {
+        try {
+
+            $user = User::where('email', $request->email)->first();
+            $user->update([
+                'password' => $request->new_password
+            ]);
+            return response()->json(
+                [
+                    "status" => true,
+                    "msg" => 'Password changed successfully',
+                ], 200);
+        }
+
+        catch (Exception $e) {
+            return response()->json(["status" => false,
+                "msg" => $e->getMessage(),
+            ], 500
+            );
+        }
+
+    }
+
 }

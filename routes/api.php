@@ -17,14 +17,20 @@ use Illuminate\Support\Facades\Route;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
+Route::controller(StaticPagesController::class)->group(function () {
+    Route::get('home','index');
+    Route::get('aboutUs','aboutUs');
+});
 
-Route::get('home',[StaticPagesController::class,'index']);
 
 Route::controller(AuthController::class)->group(function (){
     Route::post('register', 'register');
     Route::post('login', 'login');
     Route::get('getStates','getStates');
     Route::get('getCities/{id}','getCities');
+    Route::post('confirmEmail','confirmEmail');
+    Route::post('resetPassword','resetPassword');
+    Route::post('changePassword','changePassword');
 });
 
 
@@ -32,8 +38,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
 
     Route::controller(ProfileController::class)->group(function () {
-        Route::put('editProfile','editProfile');
-        Route::put('updatePassword','updatePassword');
+        Route::post('editProfile','editProfile');
+        Route::post('updatePassword','updatePassword');
+
     });
 
     Route::get('getCategories',[CategoryCotroller::class,'getCategories']);
@@ -43,8 +50,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('oneJourney/{id}','oneJourney');
         Route::post('createJourney','createJourney');
         Route::post('joinJourney','joinJourney');
+        Route::get('allNotifications','allNotifications');
     });
 
-
     });
+
 

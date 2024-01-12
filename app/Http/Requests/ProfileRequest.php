@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Models\User;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class ProfileRequest extends FormRequest
 {
@@ -23,14 +25,11 @@ class ProfileRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|min:3,max:64',
-            'email' => 'required|email|unique:users',
-            'mobile' => 'required|max:11,min:11',
-            'state_id' => 'required',
-            'city_id' => 'required',
-            'date_of_birth' => 'required',
-            'gender' => 'required|string|in:male,female',
-//            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'name' => ['string','min:3','max:64'],
+            'email' => ['email',Rule::unique(User::class)->ignore($this->user()->id)],
+            'mobile' => ['max:11','min:11'],
+            'gender' => 'string|in:male,female',
+            'image' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
         ];
     }
 }

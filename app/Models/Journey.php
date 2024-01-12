@@ -9,6 +9,12 @@ class Journey extends Model
 {
     use HasFactory;
 
+    protected $fillable = [
+        'journey_name','journey_description',
+        'user_id','date_of_journey','time_of_journey',
+        'image','category_id','state_id','city_id'
+    ];
+
     public function getImageAttribute($value)
     {
         return asset('uploads/images/'.$value);
@@ -30,5 +36,4 @@ class Journey extends Model
         return $this->belongsTo(City::class);
     }
 
-    protected $guarded = [];
 }

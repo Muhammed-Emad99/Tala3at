@@ -16,16 +16,15 @@ class AuthResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
+            "id" => $this->id,
             "name" => $this->name,
             "email" => $this->email,
             "mobile" => $this->mobile,
             "state name" => $this->state->state_name_ar,
             'city name ' => $this->city->city_name_ar,
-            'date of birth' => $this->date_of_birth,
+            'date of birth' => Carbon::parse($this->date_of_birth)->format('D, d M Y H:m A'),
             'gender' => $this->gender,
-            'image' => $this->image,
-            'created at' => Carbon::parse($this->created_at)->format('D, d M Y H:m A'),
-            'updated at' =>Carbon::parse($this->updated_at)->format('D, d M Y H:m A'),
+            'image' => asset('uploads/images/users/'.$this->image),
         ];
     }
 }

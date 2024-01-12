@@ -16,6 +16,7 @@ class JourneyResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
+            'id'=> $this->id,
             'journey name' => $this->journey_name,
             'journey description' => $this->journey_description,
             'image' => $this->image,

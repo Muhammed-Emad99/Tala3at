@@ -9,7 +9,7 @@ class Join extends Model
 {
     use HasFactory;
 
-    protected $guarded = [];
+    protected $fillable = ['journey_id','user_id'];
 
     public function user(){
         return $this->belongsTo(User::class);

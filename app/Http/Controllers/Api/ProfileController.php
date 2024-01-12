@@ -3,50 +3,45 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\PasswordRequest;
 use App\Http\Requests\ProfileRequest;
 use App\Http\Resources\AuthResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Hash;
 use Str;
 
 
 class ProfileController extends Controller
 {
-    public function editProfile(Request $request)
+    public function editProfile(ProfileRequest $request)
     {
-      return  $request;
+
         try {
 
             $user = auth()->user();
+//            dd($user);
             if ($request->hasFile('image')) {
-                if (File::exists(public_path('uploads/images/users'), $user->image)) {
-                    $user->image::unlink(public_path('uploads/images/users'), $user->image);
+                if (File::exists(public_path('uploads/images/users'),$user->image)) {
+                    File::delete(public_path('uploads/images/users/' . $user->image));
                 }
 
                 $image = Str::random(5) . '.' . $request->image->extension();
-                $request->image->move(public_path('uploads/images/users'), $image);
-
-                $updatedDate = $user->update([
-                    $user->name => $request->name,
-                    $user->email => $request->email,
-                    $user->mobile => $request->mobile,
-                    $user->state_id => $request->state_id,
-                    $user->user_id => $request->user_id,
-                    $user->date_of_birth => $request->date_of_birth,
-                    $user->gender => $request->gender,
-                    $user->image => $request->image,
-                ]);
-
-                $user->save();
-
-                return response()->json(
-                    [
-                        "status" => true,
-                        "msg" => 'User Data Updated successfully',
-                        'user' => new AuthResource($updatedDate),
-                    ], 200);
-
+                $request->image->move(public_path('uploads/images/users') , $image);
+                $user->image = $image;
             }
+
+            $data = $request->except(['image']);
+            $user->update($data);
+
+
+            return response()->json(
+                [
+                    "status" => true,
+                    "msg" => 'User Data Updated successfully',
+                    'user' => new AuthResource($user),
+                ], 200);
+
 
         } catch (Exception $e) {
             return response()->json(["status" => false,
@@ -56,16 +51,10 @@ class ProfileController extends Controller
         }
     }
 
-    public function updatePassword(Request $request)
+    public function updatePassword(PasswordRequest $request)
     {
 
         try {
-
-            $request->validate([
-                'current_password' => 'required',
-                'new_password' => 'required|min:8|confirmed',
-                'new_password_confirmation'=> 'required|min:8|confirmed'
-            ]);
 
             $user = $request->user();
 
@@ -75,11 +64,9 @@ class ProfileController extends Controller
                 ]);
             }
 
-            elseif ($request->new_password != $request->new_password_confirmation){
-                return response()->json(["status" => false,
-                    "msg" => "New password and  password conformation must match. Please try again.",
-                ]);
-            }
+            $user->update([
+                'password' => $request->new_password
+            ]);
 
             return response()->json(
                 [

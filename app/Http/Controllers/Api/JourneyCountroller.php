@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\JourneyRequest;
 use App\Http\Resources\JourneyResource;
+use App\Http\Resources\NotificationResource;
 use App\Models\Category;
 use App\Models\Join;
 use App\Models\Journey;
+use App\Notifications\JoinNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Str;
@@ -22,20 +24,21 @@ class JourneyCountroller extends Controller
         try {
 
             $journeys = Journey::with(['user', 'category'])->get();
-            if ($journeys->count() > 0) {
+            if ($journeys->count() == 0) {
                 return response()->json(
                     [
                         "status" => true,
-                        "msg" => 'Get all journeys successfully',
-                        'journeys' => journeyResource::collection($journeys),
-
+                        "msg" => 'There are no Journeys yet',
                     ], 200);
+
             }
 
             return response()->json(
                 [
                     "status" => true,
-                    "msg" => 'There are no Journey yet',
+                    "msg" => 'Get all journeys successfully',
+                    'journeys' => journeyResource::collection($journeys),
+
                 ], 200);
 
         } catch (Exception $e) {
@@ -113,13 +116,17 @@ class JourneyCountroller extends Controller
             'journey_id' => 'required|exists:journeys,id',
         ]);
 
-
         try {
 
             $join = Join::create([
                 'user_id' => Auth::user()->id,
                 'journey_id' => $request->journey_id
             ]);
+
+            $journeyData = Journey::find($request->journey_id);
+            $journeyOwner = $journeyData->user;
+
+            $journeyOwner->notify(new JoinNotification(Auth::user(), $journeyData));
 
             return response()->json(
                 [
@@ -134,6 +141,26 @@ class JourneyCountroller extends Controller
             ], 500
             );
         }
+    }
+
+    public function allNotifications()
+    {
+        $allNotifications = Auth::user()->notifications;
+
+        if ($allNotifications->count() == 0) {
+            return response()->json(
+                [
+                    "status" => true,
+                    "msg" => 'There are no notifications yet',
+                ], 200);
+        }
+        return response()->json(
+            [
+                "status" => true,
+                "msg" => 'Get all notifications successfully',
+                'Notifications' => NotificationResource::collection($allNotifications),
+
+            ], 200);
     }
 
 

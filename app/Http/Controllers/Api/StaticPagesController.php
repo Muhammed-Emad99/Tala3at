@@ -2,22 +2,51 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Base\Responses\apiResponse;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\AboutResource;
+use App\Http\Resources\StaticPagesResource;
+use App\Models\About;
 use App\Models\Setting;
 use App\Models\StaticPages;
 
 class StaticPagesController extends Controller
 {
-    use apiResponse;
     public function index(){
-        $StaticPages = StaticPages::get(['title', 'description','image']);
+        $staticPages = StaticPages::get(['title', 'description','image']);
 
-        if (StaticPages::all()->count() == 0) {
-            return $this->successfully('There no data', []);
+        if (!$staticPages) {
+            return response()->json(
+                [
+                    "status" => true,
+                    "msg" => 'There no data',
+                ], 200);
         }
 
-        return $this->successfully('Data send successfully', [
-            'StaticPages' => $StaticPages]);
+        return response()->json(
+            [
+                "status" => true,
+                "msg" => 'Get data successfully',
+                "StaticPages" => StaticPagesResource::collection($staticPages)
+            ], 200);
     }
+
+    public function aboutUs(){
+        $data = About::first();
+
+        if (!$data) {
+            return response()->json(
+                [
+                    "status" => true,
+                    "msg" => 'There no data',
+                ], 200);
+        }
+
+        return response()->json(
+            [
+                "status" => true,
+                "msg" => 'Get data successfully',
+                "data" => new AboutResource($data)
+            ], 200);
+    }
+
 }
